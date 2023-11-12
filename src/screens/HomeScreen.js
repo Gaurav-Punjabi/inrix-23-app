@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from "react-native-responsive-dimensions";
 import Carousel from "react-native-snap-carousel";
 import { PRIMARY_BACKGROUND_COLOR, PRIMARY_COLOR, SECONDARY_TEXT_COLOR } from "../constants/Colors";
+import { getRestaurants } from "../services/RestaurantService";
 
 const CARD_WIDTH = responsiveWidth(80);
 const CARD_HEIGHT = responsiveHeight(45);
@@ -10,7 +11,28 @@ const CARD_HEIGHT = responsiveHeight(45);
 export default class HomeScreen extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      isLoading: false,
+      restaurants: []
+    };
   }
+
+
+  async componentDidMount() {
+    this.setState({
+      isLoading: true,
+    });
+    let restaurants = await getRestaurants();
+    if(restaurants !== null) {
+      this.setState({
+        restaurants: restaurants.slice(0, 5),
+        isLoading: false,
+      });
+    } else {
+      console.log("Null aa rha hai");
+    }
+  }
+
 
   render() {
     return (
@@ -34,13 +56,15 @@ export default class HomeScreen extends React.Component {
         {/* End of Heading Container */}
 
         {/* Card list*/}
-        <Carousel
-          ref={(c) => { this._carousel = c; }}
-          data={[1, 2, 3]}
-          renderItem={({item, index}) => this._renderItem(item, index, this.props.navigation)}
-          sliderWidth={responsiveWidth(100)}
-          itemWidth={CARD_WIDTH}
-        />
+        {!this.state.isLoading && (
+          <Carousel
+            ref={(c) => { this._carousel = c; }}
+            data={this.state.restaurants}
+            renderItem={({item, index}) => this._renderItem(item, index, this.props.navigation)}
+            sliderWidth={responsiveWidth(100)}
+            itemWidth={CARD_WIDTH}
+          />
+        )}
         {/* End of card list */}
       </View>
     );
@@ -48,12 +72,14 @@ export default class HomeScreen extends React.Component {
 
   _renderItem(item, index, navigation) {
     return (
-      <TouchableOpacity onPress={() => this.props.navigation.navigate('HomeRestaurantDetail')} style={styles.cardContainer}>
-        <Image style={styles.cardImage} source={require("../../assets/images/mock-restaurant.jpeg")} />
+      <TouchableOpacity onPress={() => this.props.navigation.navigate('HomeRestaurantDetail', {
+        restaurant: item
+      })} style={styles.cardContainer}>
+        <Image style={styles.cardImage} source={{uri: item.url}} />
         <View style={styles.cardOverlay} />
         <View style={styles.cardContentContainer}>
-          <Text style={styles.cardTitle}>Gott's Roadside</Text>
-          <Text style={styles.cardSubtitle}>San Francisco</Text>
+          <Text style={styles.cardTitle}>{item.name}</Text>
+          <Text style={styles.cardSubtitle}>{item.vicinity}</Text>
         </View>
       </TouchableOpacity>
     );

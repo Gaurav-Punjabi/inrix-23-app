@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Text, StyleSheet, View, ScrollView, TouchableOpacity } from "react-native";
+import { Image, Text, StyleSheet, View, ScrollView, TouchableOpacity, Platform, Linking } from "react-native";
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from "react-native-responsive-dimensions";
 import {
   PRIMARY_BACKGROUND_COLOR, PRIMARY_COLOR,
@@ -14,6 +14,8 @@ const PROGRESS_BAR_WIDTH = responsiveWidth(78);
 export default class RestaurantScreen extends React.Component {
   constructor(props) {
     super(props);
+
+    this.props.navigation.getParent()?.setOptions({tabBarStyle: {display: 'none'}});
   }
 
   render() {
@@ -24,19 +26,17 @@ export default class RestaurantScreen extends React.Component {
             <Image style={styles.backButton} source={require("../../assets/icons/arrow.png")} />
           </TouchableOpacity>
 
-          <Text style={styles.heading}>Gott's Roadside</Text>
+          <Text style={styles.heading}>{this.props.route.params.restaurant.name}</Text>
 
           <Image style={styles.profileImage} source={require("../../assets/icons/profile.png")} />
         </View>
 
         <ScrollView style={{width: '100%'}}>
 
-          <Image style={styles.restaurantImage} source={require("../../assets/images/mock-restaurant.jpeg")} />
+          <Image style={styles.restaurantImage} source={{uri: this.props.route.params.restaurant.url}} />
           <View style={styles.contentContainer}>
             <Text style={styles.subtitle}>About This Restaurant</Text>
-            <Text style={styles.description}>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deleniti, id,
-              molestiae. A alias at distinctio enim facere hic labore necessitatibus, nostrum qui quidem rem repellendus
-              reprehenderit sit ut, voluptatem voluptatum!</Text>
+            <Text style={styles.description}>{renderType(this.props.route.params.restaurant.types)}</Text>
 
             <View
               style={{
@@ -51,42 +51,42 @@ export default class RestaurantScreen extends React.Component {
             <View style={styles.ratingCard}>
               <View style={styles.ratingContentContainer}>
                 <Text style={styles.ratingLabel}>Overall Rating:</Text>
-                <Text style={styles.ratingText}>95%</Text>
+                <Text style={styles.ratingText}>{calculateRating(this.props.route.params.restaurant.composite_score)}%</Text>
               </View>
               <Image style={styles.ratingIcon} source={require("../../assets/icons/star.png")} />
             </View>
 
             <View style={styles.progressContainer}>
-              <Text style={styles.progressLabel}>Frequency Rating:</Text>
+              <Text style={styles.progressLabel}>Distance Rating:</Text>
               <View style={styles.progressContentContainer}>
                 <View>
-                  <Progress.Bar progress={0.6} width={PROGRESS_BAR_WIDTH} color={WARNING_COLOR}
+                  <Progress.Bar progress={calculateProgress(this.props.route.params.restaurant.traffic_score)} width={PROGRESS_BAR_WIDTH} color={WARNING_COLOR}
                                 unfilledColor={"#e5e5e5"}
                                 height={responsiveHeight(1)}
                                 borderRadius={responsiveWidth(2)}
                                 borderColor={"#e5e5e5"} />
                 </View>
 
-                <Text style={styles.progressText}>65%</Text>
+                <Text style={styles.progressText}>{calculateProgressPercentage(this.props.route.params.restaurant.traffic_score)}%</Text>
               </View>
             </View>
 
             <View style={styles.progressContainer}>
-              <Text style={styles.progressLabel}>Frequency Rating:</Text>
+              <Text style={styles.progressLabel}>Traffic Rating:</Text>
               <View style={styles.progressContentContainer}>
                 <View>
-                  <Progress.Bar progress={0.6} width={PROGRESS_BAR_WIDTH} color={WARNING_COLOR}
+                  <Progress.Bar progress={calculateProgress(this.props.route.params.restaurant.distance_score)} width={PROGRESS_BAR_WIDTH} color={WARNING_COLOR}
                                 unfilledColor={"#e5e5e5"}
                                 height={responsiveHeight(1)}
                                 borderRadius={responsiveWidth(2)}
                                 borderColor={"#e5e5e5"} />
                 </View>
 
-                <Text style={styles.progressText}>65%</Text>
+                <Text style={styles.progressText}>{calculateProgressPercentage(this.props.route.params.restaurant.distance_score)}%</Text>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.buttonContainer} onPress={() => openLink(this.props.route.params.restaurant.lat, this.props.route.params.restaurant.lng)}>
               <Text style={styles.buttonText}>Go To Location</Text>
             </TouchableOpacity>
           </View>
@@ -96,6 +96,34 @@ export default class RestaurantScreen extends React.Component {
   }
 }
 
+function openLink(lat, lng) {
+  const scheme = Platform.select({ ios: 'maps://0,0?q=', android: 'geo:0,0?q=' });
+  const latLng = `${lat},${lng}`;
+  const label = 'Custom Label';
+  const url = Platform.select({
+    ios: `${scheme}${label}@${latLng}`,
+    android: `${scheme}${latLng}(${label})`
+  });
+
+
+  Linking.openURL(url);
+}
+
+function renderType(types) {
+  return types.replaceAll(",", " | ").replaceAll("_", " ");
+}
+function calculateRating(compositeScore) {
+  return Math.round(compositeScore * 10);
+}
+
+function calculateProgressPercentage(value) {
+  return Math.round((value / 10.00) * 100);
+}
+
+
+function calculateProgress(value) {
+  return value / 10;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -129,7 +157,8 @@ const styles = StyleSheet.create({
   heading: {
     fontFamily: "CerealBold",
     fontWeight: "bold",
-    fontSize: responsiveFontSize(2.3),
+    fontSize: responsiveFontSize(1.8),
+    textTransform: "capitalize",
   },
   profileImage: {
     width: responsiveWidth(20),
@@ -148,6 +177,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: responsiveFontSize(2.2),
     marginBottom: responsiveHeight(1),
+    textTransform: "capitalize",
   },
   contentContainer: {
     width: "100%",
@@ -161,6 +191,7 @@ const styles = StyleSheet.create({
     fontFamily: "CerealBold",
     fontWeight: "500",
     marginBottom: responsiveHeight(2.5),
+    textTransform: "capitalize",
   },
   ratingCard: {
     width: "100%",
@@ -227,7 +258,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: '100%',
-    marginBottom: responsiveHeight(5),
+    marginBottom: responsiveHeight(20),
     borderRadius: responsiveWidth(3)
   },
   buttonText: {

@@ -26,6 +26,8 @@ import {
 import { NavigationContainer } from "@react-navigation/native";
 import { MyTabs } from "./src/navigation/BottomTabNavigator";
 import { PRIMARY_BACKGROUND_COLOR } from "./src/constants/Colors";
+import SplashScreen from "./src/screens/SplashScreen";
+import { createStackNavigator } from "@react-navigation/stack";
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -57,6 +59,8 @@ function Section({ children, title }: SectionProps): JSX.Element {
   );
 }
 
+const Stack = createStackNavigator();
+
 function App(): JSX.Element {
   const isDarkMode = useColorScheme() === "dark";
 
@@ -67,8 +71,18 @@ function App(): JSX.Element {
 
   return (
     <SafeAreaProvider style={backgroundStyle}>
+      {/*<NavigationContainer>*/}
+      {/*  <MyTabs/>*/}
+      {/*</NavigationContainer>*/}
+      {/*<SplashScreen/>*/}
+
       <NavigationContainer>
-        <MyTabs/>
+        <Stack.Navigator screenOptions={{
+          headerShown: false
+        }}>
+          <Stack.Screen name={"Splash"} component={SplashScreen}/>
+          <Stack.Screen name={"Routes"} component={MyTabs}/>
+        </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
   );

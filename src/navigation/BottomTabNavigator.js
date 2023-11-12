@@ -11,6 +11,7 @@ import MapScreen from "../screens/MapScreen";
 import {useTheme} from "react-native-paper";
 import { DiningStack } from "./DiningStack";
 import { HomeStack } from "./HomeStack";
+import { MapStack } from "./MapStack";
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -26,22 +27,28 @@ export const MyTabs = () => {
 
       <Tab.Screen name="Dining" component={DiningStack} options={{
         tabBarLabel: "Dining",
-        tabBarIcon: ({color}) => (
-          <Image source={require("../../assets/icons/cutlery.png")} style={{ width: 25, height: 25 }}/>
-        ),
-      }}/>
+        tabBarIcon: ({color, focused}) => {
+          if(focused) {
+            return (<Image source={require("../../assets/icons/cutlery.png")} style={{ width: 25, height: 25 }} />);
+          } else {
+            return (<Image source={require("../../assets/icons/cutlery_inactive.png")} style={{ width: 25, height: 25 }} />);
+        }}}}/>
       <Tab.Screen name="Home" component={HomeStack} options={{
         tabBarLabel: "Home",
-        tabBarIcon: ({color}) => (
-          <Image source={require("../../assets/icons/home.png")} style={{ width: 25, height: 25 }}/>
-        ),
-      }}/>
-      <Tab.Screen name="Maps" component={MapScreen} options={{
+        tabBarIcon: ({color, focused}) => {
+          if(focused) {
+            return (<Image source={require("../../assets/icons/home.png")} style={{ width: 25, height: 25 }} />);
+          } else {
+            return (<Image source={require("../../assets/icons/home_inactive.png")} style={{ width: 25, height: 25 }} />);
+      }}}}/>
+      <Tab.Screen name="Maps" component={MapStack} options={{
         tabBarLabel: "Maps",
-        tabBarIcon: ({color}) => (
-          <Image source={require("../../assets/icons/location.png")} style={{ width: 25, height: 25 }}/>
-        ),
-      }}/>
+        tabBarIcon: ({color, focused}) => {
+          if(focused) {
+            return (<Image source={require("../../assets/icons/location.png")} style={{ width: 25, height: 25 }} />);
+          } else {
+            return (<Image source={require("../../assets/icons/location_inactive.png")} style={{ width: 25, height: 25 }} />);
+          }}}}/>
     </Tab.Navigator>
   );
 }

@@ -1,14 +1,53 @@
+import { types } from "@babel/core";
 import React from "react";
-import { Text, View, StyleSheet, Image, ScrollView, TouchableWithoutFeedback, TouchableOpacity } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from "react-native-responsive-dimensions";
 import Carousel from "react-native-snap-carousel";
 import { PRIMARY_BACKGROUND_COLOR, PRIMARY_COLOR, SECONDARY_TEXT_COLOR, SUCCESS_COLOR } from "../constants/Colors";
+import { getRestaurants } from "../services/RestaurantService";
 
 const CARD_HEIGHT = responsiveHeight(25);
 
 export default class DiningScreen extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      isLoading: false,
+      restaurants: [],
+    }
+  };
+
+  async componentDidMount() {
+    this.setState({
+      isLoading: true,
+    });
+    let restaurants = await getRestaurants();
+    if(restaurants !== null) {
+      this.setState({
+        restaurants: restaurants,
+        isLoading: false,
+      });
+    } else {
+      console.log("Null aa rha hai");
+    }
+  }
+
+  renderList() {
+    if(this.state.isLoading) {
+      return <View/>;
+    } else {
+      return <FlatList data={this.state.restaurants} renderItem={({item}) =>
+        <RestaurantCard {...item} navigation={this.props.navigation}/> }/>;
+    }
   }
 
   render() {
@@ -27,16 +66,7 @@ export default class DiningScreen extends React.Component {
 
 
         {/* Card list*/}
-        <ScrollView>
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-          <RestaurantCard navigation={this.props.navigation} />
-        </ScrollView>
+        {this.renderList()}
         {/* End of card list */}
 
       </View>
@@ -44,29 +74,36 @@ export default class DiningScreen extends React.Component {
   }
 }
 
-export const RestaurantCard = ({ navigation }) => (
-  <TouchableOpacity onPress={() => navigation.navigate("DiningRestaurantDetail")}
+const getTypes = (typesString) => {
+  let list = typesString.split(",");
+  return list[0];
+}
+
+export const RestaurantCard = (props) => (
+  <TouchableOpacity onPress={() => props.navigation.navigate("DiningRestaurantDetail", {
+    restaurant: props
+  })}
                             style={styles.cardContainer}>
     <>
       <View style={styles.cardImageContainer}>
-        <Image style={styles.cardImage} source={require("../../assets/images/mock-restaurant.jpeg")} />
+        <Image style={styles.cardImage} source={{uri: props.url}} />
         <View style={styles.cardOverlay} />
         <View style={styles.cardContentContainer}>
           <View style={styles.cardInnerContainer}>
-            <Text style={styles.cardTitle}>Gott's Roadside</Text>
-            <Text style={styles.cardSubtitle}>Burgers | Shakes | Wine</Text>
+            <Text style={styles.cardTitle}>{props.name}</Text>
+            <Text style={styles.cardSubtitle}>{getTypes(props.types)}</Text>
           </View>
 
           <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>9.5</Text>
+            <Text style={styles.ratingText}>{Math.round(props.composite_score * 10) / 10}</Text>
             <Image source={require("../../assets/icons/star-white.png")}
                    style={styles.ratingImage} />
           </View>
         </View>
       </View>
       <View style={styles.cardFooter}>
-        <Text>Hello</Text>
-        <Text>World</Text>
+        <Text>{props.vicinity}</Text>
+        {/*<Text>World</Text>*/}
       </View>
     </>
   </TouchableOpacity>
@@ -123,6 +160,7 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginBottom: responsiveHeight(3),
     paddingLeft: responsiveWidth(6),
+    textTransform: "capitalize"
   },
   cardImage: {
     width: "100%",
@@ -146,13 +184,14 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontFamily: "CerealBold",
     fontWeight: "600",
-    fontSize: responsiveFontSize(2.4),
+    fontSize: responsiveFontSize(2.2),
     marginBottom: responsiveHeight(0.5),
   },
   cardSubtitle: {
     color: "#CCC",
     fontFamily: "CerealBold",
     fontWeight: "500",
+    textTransform: "capitalize"
   },
   cardContentContainer: {
     paddingHorizontal: responsiveWidth(3),

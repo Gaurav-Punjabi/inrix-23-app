@@ -1,23 +1,19 @@
 import React from "react";
-import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker, Callout, CalloutSubview } from "react-native-maps";
 import {
   Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text,
+  Text, TouchableOpacity,
   useColorScheme,
   View,
-} from 'react-native';
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+} from "react-native";
+import { responsiveFontSize, responsiveHeight, responsiveWidth } from "react-native-responsive-dimensions";
+import { PRIMARY_COLOR, SECONDARY_COLOR } from "../constants/Colors";
 import imagePath from '../constants/image-path';
+import { getRestaurants } from "../services/RestaurantService";
 
 
 
@@ -25,61 +21,90 @@ export default class MapScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      latitude: 30.7993,
-      longitude: 76.9149,
+      latitude: 37.8086,
+      longitude: -122.4125,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
+      isLoading: false,
+      restaurants: [],
     };
   }
 
 
+  async componentDidMount() {
+    this.setState({
+      isLoading: true,
+    });
+    let restaurants = await getRestaurants();
+    if(restaurants !== null) {
+      this.setState({
+        restaurants: restaurants.map(item => ({
+          id: item.id,
+          coords: {
+            latitude: item.lat,
+            longitude: item.lng
+          },
+          ratings: (item.composite_score ),
+          item: item
+        })),
+        isLoading: false,
+      });
+    } else {
+      console.log("Null aa rha hai");
+    }
+  }
+
+
   render() {
+    let navigation = this.props.navigation;
     return (
       <View style={styles.container}>
-        <MapView
-        provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-        style={styles.map}
-        initialRegion={this.state}
-        customMapStyle={DarkMatchStyle}
-      >
-        {data.map((val, i) => {
-          return (
-            <Marker
-              coordinate={val.coords}
+        {!this.state.isLoading && <MapView
+          provider={PROVIDER_GOOGLE} // remove if not using Google Maps
+          style={styles.map}
+          initialRegion={this.state}
+          customMapStyle={DarkMatchStyle}
+        >
+          {this.state.restaurants.map((val, i) => {
+            return (
+              <Marker
+                coordinate={val.coords}
 
-            >
-              <Image
-                source={val.ratings <= 2 ? imagePath.pinred : val.ratings == 3 ? imagePath.pinyellow : imagePath.pingreen}
-                style={{ width: 50, height: 50 }}
-                resizeMode="contain"
-              />
-              <View></View>
-              <Callout>
-                <View
-                  style={{
-                    height: 100, width: 100, justifyContent: 'center',
-                    borderRadius: 20, alignItems: 'center'
-                  }}>
-                  <Text>
-                    we can add Restraunt and images here
-                  </Text>
-                </View>
-              </Callout>
-            </Marker>
-          )
-        })}
+              >
+                <Image
+                  source={val.ratings <= 7 ? imagePath.pinred : val.ratings <= 8 ? imagePath.pinyellow : imagePath.pingreen}
+                  style={{ width: responsiveFontSize(4), height: responsiveFontSize(4) }}
+                  resizeMode="contain"
+                />
+
+                <Callout onPress={() => navigation.navigate("MapRestaurantDetail", {
+                  restaurant: val.item
+                })}>
+                  <CalloutSubview onPress={() => navigation.navigate("MapRestaurantDetail", {
+                    restaurant: val.item
+                  })}>
+                    <TouchableOpacity onPress={() => navigation.navigate("MapRestaurantDetail", {
+                      restaurant: val.item
+                    })}
+                                      style={{
+                                        width: responsiveWidth(14),  height: responsiveHeight(4) , color: "#FFF",
+                                        paddingVertical: responsiveHeight(1), flexDirection: "row",
+                                      }}>
+                      <Text style={{color: PRIMARY_COLOR, fontFamily: "CerealBold", fontWeight: "600", marginRight: responsiveWidth(1)}}>
+                        View →
+                      </Text>
+                    </TouchableOpacity>
+                  </CalloutSubview>
+                </Callout>
+              </Marker>
+            )
+          })}
 
 
 
-        {/* <Marker coordinate={{
-          latitude: 30.7993,
-          longitude: 76.9149,
-          title: "santa clara",
-          discription:'heloo'
-        }}/> */}
 
 
-      </MapView>
+        </MapView>}
       </View>
     )
   }
@@ -98,44 +123,11 @@ const styles = StyleSheet.create({
 
 const DarkMatchStyle = [
   {
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#1d2c4d"
-      }
-    ]
-  },
-  {
+    "featureType": "administrative",
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#8ec3b9"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#1a3646"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.country",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#4b6878"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.land_parcel",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#64779e"
+        "color": "#6195a0"
       }
     ]
   },
@@ -144,52 +136,55 @@ const DarkMatchStyle = [
     "elementType": "geometry.stroke",
     "stylers": [
       {
-        "color": "#4b6878"
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "landscape",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "lightness": "0"
+      },
+      {
+        "saturation": "0"
+      },
+      {
+        "color": "#f5f5f2"
+      },
+      {
+        "gamma": "1"
       }
     ]
   },
   {
     "featureType": "landscape.man_made",
-    "elementType": "geometry.stroke",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#334e87"
+        "lightness": "-3"
+      },
+      {
+        "gamma": "1.00"
       }
     ]
   },
   {
-    "featureType": "landscape.natural",
-    "elementType": "geometry",
+    "featureType": "landscape.natural.terrain",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#023e58"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#283d6a"
+        "visibility": "off"
       }
     ]
   },
   {
     "featureType": "poi",
-    "elementType": "labels.text.fill",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#6f9ba5"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#1d2c4d"
+        "visibility": "off"
       }
     ]
   },
@@ -198,124 +193,148 @@ const DarkMatchStyle = [
     "elementType": "geometry.fill",
     "stylers": [
       {
-        "color": "#023e58"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [
+        "color": "#bae5ce"
+      },
       {
-        "color": "#3C7680"
+        "visibility": "on"
       }
     ]
   },
   {
     "featureType": "road",
-    "elementType": "geometry",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#304a7d"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [
+        "saturation": -100
+      },
       {
-        "color": "#98a5be"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.stroke",
-    "stylers": [
+        "lightness": 45
+      },
       {
-        "color": "#1d2c4d"
+        "visibility": "simplified"
       }
     ]
   },
   {
     "featureType": "road.highway",
-    "elementType": "geometry",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#2c6675"
+        "visibility": "simplified"
       }
     ]
   },
   {
     "featureType": "road.highway",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#255763"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#b0d5ce"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#023e58"
-      }
-    ]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#98a5be"
-      }
-    ]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#1d2c4d"
-      }
-    ]
-  },
-  {
-    "featureType": "transit.line",
     "elementType": "geometry.fill",
     "stylers": [
       {
-        "color": "#283d6a"
+        "color": "#fac9a9"
+      },
+      {
+        "visibility": "simplified"
       }
     ]
   },
   {
-    "featureType": "transit.station",
-    "elementType": "geometry",
+    "featureType": "road.highway",
+    "elementType": "labels.text",
     "stylers": [
       {
-        "color": "#3a4762"
+        "color": "#4e4e4e"
+      }
+    ]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#787878"
+      }
+    ]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "all",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station.airport",
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "hue": "#0a00ff"
+      },
+      {
+        "saturation": "-77"
+      },
+      {
+        "gamma": "0.57"
+      },
+      {
+        "lightness": "0"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station.rail",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#43321e"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station.rail",
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "hue": "#ff6c00"
+      },
+      {
+        "lightness": "4"
+      },
+      {
+        "gamma": "0.75"
+      },
+      {
+        "saturation": "-68"
       }
     ]
   },
   {
     "featureType": "water",
-    "elementType": "geometry",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#0e1626"
+        "color": "#eaf6f8"
+      },
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#c7eced"
       }
     ]
   },
@@ -324,7 +343,13 @@ const DarkMatchStyle = [
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#4e6d70"
+        "lightness": "-49"
+      },
+      {
+        "saturation": "-53"
+      },
+      {
+        "gamma": "0.79"
       }
     ]
   }

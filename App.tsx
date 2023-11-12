@@ -62,6 +62,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
 const Stack = createStackNavigator();
 
 function App(): JSX.Element {
+  console.disableYellowBox = true;
   const isDarkMode = useColorScheme() === "dark";
 
   const backgroundStyle = {
@@ -71,17 +72,12 @@ function App(): JSX.Element {
 
   return (
     <SafeAreaProvider style={backgroundStyle}>
-      {/*<NavigationContainer>*/}
-      {/*  <MyTabs/>*/}
-      {/*</NavigationContainer>*/}
-      {/*<SplashScreen/>*/}
-
       <NavigationContainer>
         <Stack.Navigator screenOptions={{
           headerShown: false
         }}>
-          <Stack.Screen name={"Splash"} component={SplashScreen}/>
-          <Stack.Screen name={"Routes"} component={MyTabs}/>
+          <Stack.Screen name={"Splash"} component={SplashScreen} />
+          <Stack.Screen name={"Routes"} component={MyTabs} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
